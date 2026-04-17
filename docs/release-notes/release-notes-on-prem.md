@@ -28,6 +28,7 @@ import TabItem from '@theme/TabItem';
 - 大幅提升 Paimon 连接器在多更新条件下的数据写入性能
 - StarRocks 连接器适配高可用（HA）架构，确保持续稳定的数据写入
 - 引擎与管理端通讯端口（8246）新增 WSS 协议支持，增强通信安全性
+- 测试内容
 
 ### 缺陷修复
 
