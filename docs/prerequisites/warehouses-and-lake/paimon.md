@@ -4,7 +4,7 @@ import Content1 from '../../reuse-content/_enterprise-and-community-features.md'
 
 <Content1 />
 
-Apache Paimon（简称 Paimon） 一种 Lake 格式，支持使用 Flink 和 Spark 构建实时 Lakehouse 架构，用于流式和批处理操作。 Tapdata 支持将数据实时写入 Paimon 表，用于实时数据湖构建。
+Apache Paimon（简称 Paimon）是一种数据湖格式，支持使用 Flink 和 Spark 构建实时湖仓架构，用于流式和批处理操作。TapData 支持将 Paimon 作为源或目标库，用于实时数据湖构建。
 
 
 ```mdx-code-block
@@ -20,6 +20,13 @@ Paimon 0.6+ 版本（推荐 0.8.2+）
 
 **仅 DML 操作**：INSERT、UPDATE、DELETE
 
+:::tip
+
+- 作为源库时，支持全量读取和基于 Paimon Snapshot 的增量读取，不支持采集 DDL 操作。
+- 作为目标库时，不支持运行时动态模型变更；如需创建或调整目标表结构，请在任务启动前完成。
+
+:::
+
 ## 支持的数据类型
 
 支持 Paimon 0.6+ 版本的所有数据类型，为保障数据精度，建议参考[官方文档](https://paimon.apache.org/docs/master/concepts/spec/fileformat/)设置表列类型映射，如 Parquet 格式下 DATE 类型推荐使用 INT32 存储。
@@ -32,6 +39,9 @@ Paimon 0.6+ 版本（推荐 0.8.2+）
 
 ## 注意事项
 
+- 将 Paimon 作为源库时，TapData 需要读取 Paimon 仓库元数据和表数据，请确保 TapData Agent 可访问仓库路径，并具备列举数据库、列举表、读取表结构和读取数据文件的权限。
+- 将 Paimon 作为源库进行增量同步时，TapData 基于 Paimon Snapshot 读取变更；任务首次进入增量且没有可用断点时，会从当前最新 Snapshot 之后开始读取，不会回放该 Snapshot 之前的历史变更。
+- Paimon 源端读取更新事件时，会基于 Paimon RowKind 输出变更记录；如果下游强依赖原生 UPDATE 语义，建议先在测试环境验证更新、删除场景的处理结果。
 - 为避免并发冲突和降低 Compaction 压力，将数据同步到 Paimon 时，为任务的目标节点建议关闭多线程写入，同时将单次写入条数改大到 1,000，超时时间改为 1,000（毫秒）。
 - 始终为表定义主键以实现高效更新删除，如表规模较大，推荐使用分区功能以提升查询/写入性能。
 - Paimon 仅支持主键（不支持传统索引），不支持运行时动态模型变更。
@@ -53,8 +63,8 @@ Paimon 0.6+ 版本（推荐 0.8.2+）
 
     - **基本设置**
       - **连接名称**：填写具有业务意义的独有名称。
-      - **连接类型**：仅支持将 Paimon 作为目标库。
-      - **仓库路径**：Paimon 存储数据的根路径，存储类型为 S3 时，填写示例为 `s3://bucket/path`；存储类型为 HDFS 时，填写示例为 `hdfs://namenode:port/path`；存储类型为 OSS 时，填写示例为 `oss://bucket/path`；存储类型为本地文件系统时，填写示例为 `/local/path/to/warehouse`。
+      - **连接类型**：支持将 Paimon 作为源或目标库。
+      - **仓库路径**：Paimon 存储数据的根路径，存储类型为 S3 时，填写示例为 `s3://bucket/path`；存储类型为 HDFS 时，填写示例为 `hdfs://namenode:port/path`；存储类型为 OSS 时，填写示例为 `oss://bucket/path`；存储类型为本地文件系统时，填写示例为 `/local/path/to/warehouse`。请确保 TapData Agent 可访问该路径；作为源库时，需具备读取仓库元数据和表数据的权限；作为目标库时，还需具备写入、创建和删除权限。
       - **存储类型**：Paimon 支持多种存储类型，包括 S3、HDFS、OSS 和本地文件系统，根据实际场景选择合适的存储类型。
         ```mdx-code-block
         <Tabs className="unique-tabs">
@@ -66,6 +76,7 @@ Paimon 0.6+ 版本（推荐 0.8.2+）
         * **S3 访问密钥**：填写 S3 服务的访问密钥 ID
         * **S3 密钥**：填写 S3 服务的密钥
         * **S3 区域**：填写 S3 服务的区域，例如：`us-east-1`
+        * **权限要求**：作为源库时，访问密钥需具备列举 Bucket/目录和读取对象的权限；作为目标库时，还需具备写入对象、删除对象等权限。
 
         </TabItem>
         <TabItem value="HDFS">
@@ -75,6 +86,7 @@ Paimon 0.6+ 版本（推荐 0.8.2+）
         * **HDFS 主机**：填写 HDFS 服务的主机名，例如：`192.168.1.57`
         * **HDFS 端口**：填写 HDFS 服务的端口号，例如：`9000`
         * **HDFS 用户**：填写 HDFS 服务的操作用户，例如：`hadoop`
+        * **权限要求**：作为源库时，HDFS 用户需具备仓库路径及其子目录的读取和执行权限；作为目标库时，还需具备写入、创建和删除权限。
 
         </TabItem>
         <TabItem value="OSS">
@@ -84,11 +96,12 @@ Paimon 0.6+ 版本（推荐 0.8.2+）
         * **OSS 端点**：填写 OSS 服务端点，包含端口号，例如：`https://oss-cn-hangzhou.aliyuncs.com`
         * **OSS 访问密钥**：填写 OSS 服务的访问密钥 ID
         * **OSS 密钥**：填写 OSS 服务的密钥
+        * **权限要求**：作为源库时，访问密钥需具备列举 Bucket/目录和读取对象的权限；作为目标库时，还需具备写入对象、删除对象等权限。
 
         </TabItem>
         <TabItem value="Local">
 
-        支持本地文件系统，该路径需要在 TapData 服务所在节点可访问。
+        支持本地文件系统，该路径需要在 TapData 服务所在节点可访问。作为源库时，TapData Agent 运行用户需具备仓库路径及其子目录的读取权限；作为目标库时，还需具备写入、创建和删除权限。
 
         </TabItem>
         </Tabs>
