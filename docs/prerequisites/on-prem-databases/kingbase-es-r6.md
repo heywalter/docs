@@ -147,7 +147,21 @@ KingbaseES-R6 支持的数据库模式为 Oracle、PostgreSQL 和 MySQL，需注
 
    4. 安装日志插件。
 
-      * **wal2json**：登录 KingbaseES-R6 所属的服务器，跟随下述步骤完成插件的编译，最后将生成的 `wal2json.so` 文件复制到  KingbaseES-R6 对应目录，本案例中为 `/home/kingbase5b/ES/V8/KESRealPro/V008R006C005B0054/Server/lib/`。
+      * [Walminer](https://gitee.com/movead/XLogMiner/tree/master/)（推荐）：V87B 以上的版本内置该插件，使用方法，见 [WalMiner 使用示例](https://help.kingbase.com.cn/v8/admin/reference/walminer/walminer-4.html)。该方式不依赖逻辑复制，无需设置 `wal_level` 为 `logical`，也不需要调整复制槽配置，但需授予超级管理员权限。
+
+
+      - [Pgoutput](https://www.postgresql.org/docs/15/sql-createsubscription.html)：内置逻辑复制协议，无需额外安装。对于含主键表且 `replica identity` 为 `default` 的情况，更新事件中的 `before` 字段会为空，可通过设置 `replica identity full` 解决。此外，如您未授予数据库级**创建**权限，需使用以下命令创建所需 PUBLICATION：
+
+         ```sql
+         CREATE PUBLICATION dbz_publication FOR ALL TABLES;
+         ```
+         :::tip
+         此外，在创建连接时选择 Pgoutput 插件，可开启**部分订阅**功能，避免无主键表必须设置 REPLICA IDENTITY FULL 才能更新/删除的限制；注意用于同步的账号需具备 `CREATE PUBLICATION` 和目标表的 `OWNER` 权限。
+         :::
+
+      - [Decoderbufs](https://github.com/debezium/postgres-decoderbufs)：利用 Google Protocol Buffers 解析 WAL 日志，但配置较为复杂。
+      
+      * [wal2json](https://github.com/eulerto/wal2json/blob/master/README.md)：登录 KingbaseES-R6 所属的服务器，跟随下述步骤完成插件的编译，最后将生成的 `wal2json.so` 文件复制到  KingbaseES-R6 对应目录，本案例中为 `/home/kingbase5b/ES/V8/KESRealPro/V008R006C005B0054/Server/lib/`。
       
         ```bash
         # 下载插件
@@ -171,7 +185,6 @@ KingbaseES-R6 支持的数据库模式为 Oracle、PostgreSQL 和 MySQL，需注
         make
         ```
       
-      * **walminer**：V87B 以上的版本内置该插件，使用方法，见 [WalMiner 使用示例](https://help.kingbase.com.cn/v8/admin/reference/walminer/walminer-4.html)。该方式不依赖逻辑复制，无需设置 `wal_level` 为 `logical`，也不需要调整复制槽配置，但需授予超级管理员权限。
 
 ### 作为目标库
 
