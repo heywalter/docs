@@ -150,13 +150,14 @@ KingbaseES-R6 支持的数据库模式为 Oracle、PostgreSQL 和 MySQL，需注
       * [Walminer](https://gitee.com/movead/XLogMiner/tree/master/)（推荐）：V87B 以上的版本内置该插件，使用方法，见 [WalMiner 使用示例](https://help.kingbase.com.cn/v8/admin/reference/walminer/walminer-4.html)。该方式不依赖逻辑复制，无需设置 `wal_level` 为 `logical`，也不需要调整复制槽配置，但需授予超级管理员权限。
 
 
-      - [Pgoutput](https://www.postgresql.org/docs/15/sql-createsubscription.html)：内置逻辑复制协议，无需额外安装。对于含主键表且 `replica identity` 为 `default` 的情况，更新事件中的 `before` 字段会为空，可通过设置 `replica identity full` 解决。此外，如您未授予数据库级**创建**权限，需使用以下命令创建所需 PUBLICATION：
+      - [Pgoutput](https://www.postgresql.org/docs/15/sql-createsubscription.html)：内置逻辑复制协议，无需额外安装。对于含主键表且 `replica identity` 为 `default` 的情况，更新事件中的 `before` 字段会为空，可通过设置 `replica identity full` 解决。此外，如需使用默认的全局 PUBLICATION，请由管理员或超级用户预先创建：
 
          ```sql
+         -- 需由管理员或超级用户执行
          CREATE PUBLICATION dbz_publication FOR ALL TABLES;
          ```
          :::tip
-         此外，在创建连接时选择 Pgoutput 插件，可开启**部分订阅**功能，避免无主键表必须设置 REPLICA IDENTITY FULL 才能更新/删除的限制；注意用于同步的账号需具备 `CREATE PUBLICATION` 和目标表的 `OWNER` 权限。
+         此外，在创建连接时选择 Pgoutput 插件，可开启**部分订阅**功能，避免无主键表必须设置 REPLICA IDENTITY FULL 才能更新/删除的限制；该方式无需创建全局 PUBLICATION，但用于同步的账号需具备 `CREATE PUBLICATION` 和目标表的 `OWNER` 权限。
          :::
 
       - [Decoderbufs](https://github.com/debezium/postgres-decoderbufs)：利用 Google Protocol Buffers 解析 WAL 日志，但配置较为复杂。
@@ -265,4 +266,3 @@ KingbaseES-R6 支持的数据库模式为 Oracle、PostgreSQL 和 MySQL，需注
 在配置数据同步/转换任务时，将 KingbaseES-R6 作为目标节点时，您可以选择是否开启**忽略 NotNull**（默认关闭），可实现在目标库建表时忽略 NOT NULL 的限制。
 
 ![节点高级特性](../../images/kingbase-r6_advanced_settings.png)
-
