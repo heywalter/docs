@@ -17,20 +17,20 @@ import TabItem from '@theme/TabItem';
 
 ## 支持数据类型
 
-| 类别    | 数据类型                                                  | 说明                      |
-| ----- | ----------------------------------------------------- | ----------------------- |
-| 整数    | BIGINT                                                | -                       |
-| 数值    | NUMBER、FLOAT、DECFLOAT                                 | DECFLOAT 仅用于查询侧识别       |
-| 字符串   | TEXT、UUID                                             | UUID 仅用于查询侧识别           |
-| 二进制   | BINARY、FILE                                           | -                       |
-| 布尔    | BOOLEAN                                               | -                       |
-| 日期/时间 | DATE、TIME、TIMESTAMP\_NTZ、TIMESTAMP\_TZ、TIMESTAMP\_LTZ | TIMESTAMP\_LTZ 仅用于查询侧识别 |
-| 半结构化  | OBJECT、ARRAY、VARIANT                                  | VARIANT 仅用于查询侧识别        |
-| 地理空间  | GEOGRAPHY、GEOMETRY                                    | 仅用于查询侧识别                |
+| 类别    | 数据类型                                                  |
+| ----- | ----------------------------------------------------- |
+| 整数    | BIGINT                                                |
+| 数值    | NUMBER、FLOAT、DECFLOAT                                 |
+| 字符串   | TEXT、UUID                                             |
+| 二进制   | BINARY、FILE                                           |
+| 布尔    | BOOLEAN                                               |
+| 日期/时间 | DATE、TIME、TIMESTAMP\_NTZ、TIMESTAMP\_TZ、TIMESTAMP\_LTZ |
+| 半结构化  | OBJECT、ARRAY、VARIANT                                  |
+| 地理空间  | GEOGRAPHY、GEOMETRY                                    |
 
 :::tip
 
-“仅用于查询侧识别”表示连接器可识别和读取该类型，但不建议直接依赖其自动建表或写入能力。作为目标库写入时，如遇到写入侧不支持或自动建表不符合预期的字段类型，请在任务的字段映射中转换为兼容类型。
+`DECFLOAT`、`TIMESTAMP_LTZ`、`VARIANT`、`GEOGRAPHY`、`GEOMETRY` 和 `UUID` 仅用于查询侧识别，表示连接器可识别和读取这些类型，但不建议直接依赖其自动建表或写入能力。作为目标库写入时，如遇到写入侧不支持或自动建表不符合预期的字段类型，请在任务的字段映射中转换为兼容类型。
 
 :::
 
@@ -125,4 +125,3 @@ import TabItem from '@theme/TabItem';
 - 问：字段类型或自动建表结果不符合预期时应如何处理？
 
   答：请先检查源端字段类型是否在[支持数据类型](#支持数据类型)范围内。对于读取侧可识别但写入侧不一定适合直接建表的类型，建议在任务的字段映射中转换为 Snowflake 目标端兼容的类型；如目标表需要特定表类型、字段定义或约束，也可以在同步前手动建表。
-
