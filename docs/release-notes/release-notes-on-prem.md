@@ -17,6 +17,40 @@ import TabItem from '@theme/TabItem';
 <TabItem value="V4.x 版本" default>
 ```
 
+## 4.19.0
+
+### 新增功能
+
+- 新增[数据追溯](../user-guide/real-time-data-hub/daas-mode/daas-mode-dashboard.md)（Data Lineage Tracing）能力，支持基于业务记录查看其在实时数据中心 FDM/MDM 层中的流转链路与字段变更，帮助定位数据问题并评估影响范围
+
+### 功能优化
+
+- 优化 [API 监控](../user-guide/data-service/monitor-api-request.md)指标展示，将 CPU 和内存使用率限制在 100% 范围内，便于判断资源瓶颈
+- 优化任务调度能力，支持一键自动均衡任务，并提升手动启动任务时的调度均衡效果
+- 优化 [Excel](../prerequisites/files/excel.md) 数据源在 [JS 节点](../user-guide/data-development/process-node.md)中的上下文信息，支持获取文件名称和最后修改时间
+- 优化数据源自定义连接参数编辑体验，支持复制和粘贴参数配置
+
+### 缺陷修复
+
+- 修复服务审计中响应数据大小统计不准确的问题
+- 修复修改 API 关联连接后，因连接信息未同步导致 API 发布失败的问题
+- 修复 API Server 访问已启用 SSL 的数据源连接时可能适配异常的问题
+- 修复日志按时间筛选时只能选择当天的问题
+- 修复拥有 admin 角色的用户权限未按预期生效的问题
+- 修复 LDAP 登录设置中，未修改密码但保存后密码配置可能被覆盖的问题
+- 修复引擎任务数统计包含定时调度任务，导致调度判断不准确的问题
+- 修复 SQL Server 同步至 Paimon 时，时间字段可能出现时区偏差的问题
+- 修复 SQL Server 同步至 PostgreSQL 任务在源库无新增数据且开启心跳表时，Agent 升级重启后可能持续触发延迟告警的问题
+- 修复 TDSQL MySQL 同步至 Oracle 时，Timestamp 类型字段可能报错的问题
+- 修复多表主从合并任务在启动时可能需要多次启动才能成功的问题
+- 修复类型修改节点缺少 INTEGER 类型选项的问题
+- 修复 Oracle 同步至 PostgreSQL 时，NUMBER 类型字段精度显示不准确的问题
+- 修复 MariaDB 同步至 Doris 时，全量同步完成后 CDC 阶段可能失败的问题
+- 修复同一机器部署多个 MySQL 实例时，TapData 可能占用较高网络带宽的问题
+- 修复 Oracle 同步至 SQL Server 全量阶段在特定场景下可能出现重复键写入错误的问题
+- 修复数据校验任务在特定场景下可能报错的问题
+- 修复从较低版本升级后，数据校验任务可能运行失败的问题
+
 ## 4.18.0
 
 ### 新增功能
