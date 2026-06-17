@@ -69,7 +69,7 @@ import TabItem from '@theme/TabItem';
 
 <TabItem value="⑤ 表详情">
 
-在表名的右侧，单击![](/img/detail_icon.png)图标，页面右侧将展示该表关联的任务和表的基本信息，包含表大小、行数、列信息、样本数据、Scheme（如主键/外键） 等，该操作在其他层级的模块中也可使用。
+在表名的右侧，单击![](/img/detail_icon.png)图标，页面右侧将展示该表关联的任务和表的基本信息，包含表大小、行数、列信息、样本数据、Schema（如主键/外键） 等，该操作在其他层级的模块中也可使用。
 
 此外，当平台加工层的某个表不再需要时，您可以单击该表并在弹出的面板中单击删除（需删除关联的任务）。
 
@@ -79,7 +79,7 @@ import TabItem from '@theme/TabItem';
 
 <TabItem value="⑥ 表溯源">
 
-单击![](/img/trace.png)图标，即可查看到表的血缘关系，可快速数据表产生的链路关系，帮助您更好管理表。
+单击![](/img/trace.png)图标，即可查看表的血缘关系，快速了解该表的上下游链路，帮助您确认数据来源、加工路径和影响范围。
 
 ![表的血缘关系](/img/trace_source.png)
 
@@ -91,4 +91,3 @@ import TabItem from '@theme/TabItem';
 
 </TabItem>
 </Tabs>
-
