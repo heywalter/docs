@@ -19,14 +19,9 @@ import TabItem from '@theme/TabItem';
 
 ## 4.19.0
 
-### 新增功能
-
-- 新增[数据追溯](../user-guide/real-time-data-hub/daas-mode/daas-mode-dashboard.md)（Data Lineage Tracing）能力，支持基于业务记录查看其在实时数据中心 FDM/MDM 层中的流转链路与字段变更，帮助定位数据问题并评估影响范围
-
 ### 功能优化
 
 - 优化 [API 监控](../user-guide/data-service/monitor-api-request.md)指标展示，将 CPU 和内存使用率限制在 100% 范围内，便于判断资源瓶颈
-- 优化任务调度能力，支持一键自动均衡任务，并提升手动启动任务时的调度均衡效果
 - 优化 [Excel](../prerequisites/files/excel.md) 数据源在 [JS 节点](../user-guide/data-development/process-node.md)中的上下文信息，支持获取文件名称和最后修改时间
 - 优化数据源自定义连接参数编辑体验，支持复制和粘贴参数配置
 
