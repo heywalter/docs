@@ -22,6 +22,7 @@ import TabItem from '@theme/TabItem';
 ### 新增功能
 
 - 新增[数据追溯](../user-guide/real-time-data-hub/daas-mode/daas-mode-dashboard.md)（Data Lineage Tracing）能力，支持基于业务记录查看其在实时数据中心 FDM/MDM 层中的流转链路与字段变更，帮助定位数据问题并评估影响范围
+- [MCP Server](../mcp/quick-start.md) 新增创建数据复制任务能力，支持 AI Agent 基于连接、表范围和同步类型创建复制任务，进一步覆盖任务配置自动化场景
 - 支持在[数据复制任务](../user-guide/copy-data/create-task.md)目标节点中调整模型字段顺序，便于按目标端建表或业务读取要求组织字段
 
 ### 功能优化
