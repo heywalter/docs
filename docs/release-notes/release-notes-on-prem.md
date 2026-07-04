@@ -17,6 +17,40 @@ import TabItem from '@theme/TabItem';
 <TabItem value="V4.x 版本" default>
 ```
 
+## 4.20.0
+
+### 新增功能
+
+- 新增[数据追溯](../user-guide/real-time-data-hub/daas-mode/daas-mode-dashboard.md)（Data Lineage Tracing）能力，支持基于业务记录查看其在实时数据中心 FDM/MDM 层中的流转链路与字段变更，帮助定位数据问题并评估影响范围
+- 支持在[数据复制任务](../user-guide/copy-data/create-task.md)目标节点中调整模型字段顺序，便于按目标端建表或业务读取要求组织字段
+
+### 功能优化
+
+- 支持通过 `./tapdata sid` 一键获取申请 License 所需的 SID 信息，简化[部署](../administration/production-deploy/install-tapdata-ha.md)前的 License 申请流程；原有 Java 命令方式仍可作为兼容方案使用
+- 优化[创建 API](../user-guide/data-service/create-api-service.md)模型配置展示，便于查看响应结果中未被选中的字段
+- 优化[任务调度均衡](../user-guide/advanced-settings/task-scheduling-balance.md)能力，支持通过独立入口查看均衡记录、调整可均衡任务在引擎间的分布，并提升手动启动任务时的调度均衡效果
+- 优化任务画布中节点创建和删除时的位置计算逻辑，提升节点编排体验
+- 重构 [DDL 同步](../case-practices/best-practice/handle-schema-change.md)处理逻辑，提升结构变更采集与应用的稳定性
+- 优化连接测试失败时的异常码与提示信息，提升问题定位效率
+- [Snowflake](../prerequisites/warehouses-and-lake/snowflake.md) 数据源正式 GA，支持作为源或目标节点使用，新增 PAT 令牌、密钥对认证，并支持目标端按表选择标准表、混合表或动态表等建表类型
+
+### 缺陷修复
+
+- 修复升级邮箱系统后，任务告警邮件可能无法送达的问题
+- 修复多 API Server 场景下，API Server 状态上报可能不准确的问题
+- 修复全量+增量任务中存在禁用节点时，缓存未按预期重建的问题
+- 修复以副本方式导入任务后，任务列表未展示新增任务的问题
+- 修复任务列表中展示的增量延迟与任务详情不一致的问题
+- 修复三层主从合并任务中，关联键被 unset 后，三级表数据未按预期删除的问题
+- 修复 SQL Server 同步至 Paimon 时，时间字段可能出现时区偏差的问题
+- 修复 Oracle 同步至 MariaDB 增量阶段任务可能因 HikariPool 超时报错的问题
+- 修复 StarRocks 数据源连接在特定场景下可能报错的问题
+- 修复 SQL Server 同步至 SQL Server 增量阶段可能报 `result set is closed` 的问题
+- 修复 TDSQL MySQL 同步至 Oracle 时，Timestamp 类型字段可能报错的问题
+- 修复 Oracle 表名包含点号（`.`）时任务可能报错的问题
+- 修复 MongoDB 同构同步时，目标端索引名称与源端不一致的问题
+- 修复 MongoDB 同步至 Kafka 增量阶段报错时，日志未输出有效错误信息的问题
+
 ## 4.19.0
 
 ### 功能优化

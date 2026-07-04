@@ -80,6 +80,12 @@ import AsciinemaPlayer from '@site/src/components/AsciinemaPlayer/AsciinemaPlaye
    1. 执行下述命令获取申请所需的 SID 信息。
 
       ```bash
+      ./tapdata sid
+      ```
+
+      如果当前安装包暂不支持该命令，也可以使用下述兼容方式获取 SID。
+
+      ```bash
       java -cp components/tm.jar -Dloader.main=com.tapdata.tm.license.util.SidGenerator org.springframework.boot.loader.launch.PropertiesLauncher
       ```
 
@@ -195,6 +201,12 @@ import AsciinemaPlayer from '@site/src/components/AsciinemaPlayer/AsciinemaPlaye
 1. 获取 License 文件。
 
    1. 执行下述命令获取申请所需的 SID 信息。
+
+      ```bash
+      ./tapdata sid
+      ```
+
+      如果当前安装包暂不支持该命令，也可以使用下述兼容方式获取 SID。
 
       ```bash
       java -cp components/tm.jar -Dloader.main=com.tapdata.tm.license.util.SidGenerator org.springframework.boot.loader.launch.PropertiesLauncher
