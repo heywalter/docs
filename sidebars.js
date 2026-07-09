@@ -318,6 +318,7 @@ const sidebars = {
                      'user-guide/advanced-settings/manage-function',
                      'user-guide/advanced-settings/custom-node',
                      'user-guide/advanced-settings/share-mining',
+                     'user-guide/advanced-settings/task-scheduling-balance',
                      'user-guide/advanced-settings/manage-external-storage',
                     ]
              },
