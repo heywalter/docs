@@ -7,7 +7,7 @@ import Content from '../../reuse-content/_all-features.md';
 
 <Content />
 
-[PostgreSQL](https://www.postgresql.org/) 是功能强大的开源对象关系数据库管理系统（ORDBMS），TapData 支持将 PostgreSQL 作为原或目标库，帮助您快速构建数据流转链路。接下来，我们将介绍如何在 TapData 平台中连接 PostgreSQL 数据源。
+[PostgreSQL](https://www.postgresql.org/) 是功能强大的开源对象关系数据库管理系统（ORDBMS），TapData 支持将 PostgreSQL 作为源或目标库，帮助您快速构建数据流转链路。接下来，我们将介绍如何在 TapData 平台中连接 PostgreSQL 数据源。
 
 ```mdx-code-block
 import Tabs from '@theme/Tabs';
@@ -50,7 +50,9 @@ import TabItem from '@theme/TabItem';
 
 ## 支持同步的操作
 
-**INSERT**、**UPDATE**、**DELETE**
+**DML 操作**：**INSERT**、**UPDATE**、**DELETE**
+
+**DDL 操作**：新增字段、修改字段名、修改字段属性、删除字段
 
 :::tip
 
@@ -61,7 +63,8 @@ import TabItem from '@theme/TabItem';
 
 ## 功能限制
 
-- PostgreSQL 作为源库时，不支持采集其 DDL（如增加字段），且不支持指定增量数据采集时间。
+- PostgreSQL 作为源库时，使用 physical 日志插件不支持指定增量数据采集时间；使用 pgoutput、wal2json 或 decoderbufs 插件时，如需按指定时间启动增量同步，需将源节点高级特性中的 **保留Wal小时数** 设置为大于 0，并确保目标时间位于保留窗口内。
+- 如需采集 PostgreSQL 源库的 DDL 事件，需使用 pgoutput、wal2json 或 decoderbufs 等逻辑复制插件，并在源节点高级特性中开启 **启用DDL触发器**。该能力会在源库默认创建 `public._tapdata_ddl_audit` 审计表、事件触发器和触发器函数，要求同步账号具备创建事件触发器的权限（通常需要超级用户权限）。
 - PostgreSQL 不支持字符串类型存放`\0`，TapData 会将其自动过滤以避免异常报错。
 - 如需捕获分区主表的增量事件，必须使用 PostgreSQL 13 及以上版本，并选择 pgoutput 插件。
 - Walminer 插件目前仅支持连接合并共享挖掘。
@@ -163,6 +166,12 @@ import TabItem from '@theme/TabItem';
    - [Decoderbufs](https://github.com/debezium/postgres-decoderbufs)：适用于 PostgreSQL 9.6 及以上，利用 Google Protocol Buffers 解析 WAL 日志，但配置较为复杂。
 
    - [Walminer](https://gitee.com/movead/XLogMiner/tree/master/)：不依赖逻辑复制，无需设置 `wal_level` 为 `logical`，也不需要调整复制槽配置，但需授予超级管理员权限。此外，当 PostgreSQL 采用**主从架构**时，推荐使用 **Walminer** 插件读取增量数据，以保障主从切换过程中数据的完整性。
+
+   :::tip
+
+   如需采集 PostgreSQL 源库的 DDL 事件，请选择 pgoutput、wal2json 或 decoderbufs 插件，并确保同步账号具备创建事件触发器的权限。TapData 会通过事件触发器将 DDL 写入 `public._tapdata_ddl_audit` 审计表，再由逻辑复制槽采集该审计表的变更；如果账号权限不足或不需要采集 DDL，可在任务源节点高级特性中关闭 **启用DDL触发器**。
+
+   :::
 
    接下来，我们以 **Wal2json** 为例演示安装流程。
 
@@ -479,6 +488,8 @@ import TabItem from '@theme/TabItem';
   * **哈希分片**：开启后，全表数据将在全量同步阶段按哈希值拆分为多个分片，并发读取数据，显著提升读取性能，但也会增加数据库负载，最大分片数可在启用开关后手动设置。
   * **分区表 CDC 根表**：仅在 PostgreSQL 13 及以上版本，并选择 pgoutput 日志插件时支持配置。开启时，仅感知根表的 CDC 事件；关闭时，仅感知子表的 CDC 事件。
   * **最大队列大小**：指定 PostgreSQL 读取增量数据队列大小，默认为 **8000**，如果下游同步较慢或表的单条数据过大，请调低此配置。
+  * **启用DDL触发器**：默认开启。开启后，TapData 会在源库默认创建 `public._tapdata_ddl_audit` 审计表、DDL 事件触发器和触发器函数，将源库 DDL 写入审计表并通过逻辑复制槽采集，支持采集新增字段、字段改名、字段属性变更和删除字段事件；如果同步账号权限不足或无需采集 DDL，可手动关闭。
+  * **保留Wal小时数**：默认值为 **0**，单位为小时。用于保留基于逻辑复制的 CDC checkpoint 与 WAL 推进窗口；设置为 0 时不保留历史 checkpoint，设置为大于 0 后，TapData 可在保留窗口内按指定增量时间点启动，保留时间越长，源库 WAL 占用可能越高。
   * **修改唯一键拆分**：默认开启。用于处理唯一键字段更新时，将 UPDATE 拆分为 DELETE + INSERT 事件，增强对目标端兼容性；如需保留原始 UPDATE 事件（例如用于审计或变更追踪），可手动关闭。
 * 作为目标节点
   * **忽略 NotNull**：默认关闭，即在目标库建表时忽略 NOT NULL 的限制。
@@ -509,4 +520,3 @@ import TabItem from '@theme/TabItem';
   -- 删除 Slot 节点
   select * from pg_drop_replication_slot('tapdata');
   ```
-
