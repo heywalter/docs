@@ -43,3 +43,9 @@ resources:
   features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 - [Fumadocs](https://fumadocs.dev) - learn about Fumadocs
+
+## License
+
+Documentation in this repository, including `README.md` and `content/docs/`,
+is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+See [LICENSE](./LICENSE) for the scope and attribution requirements.
