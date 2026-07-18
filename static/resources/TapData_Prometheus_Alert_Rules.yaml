@@ -1,0 +1,258 @@
+groups:
+  - name: tapdata-availability
+    rules:
+      - alert: TapDataTargetDown
+        expr: up{job=~"tapdata-(management|flow-engine|api-server|agent)"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          alert_family: target_down
+          component: "{{ $labels.job }}"
+        annotations:
+          summary: "TapData 目标 {{ $labels.instance }} 无法采集"
+          description: "Prometheus 已连续 2 分钟无法采集 {{ $labels.job }} 的 {{ $labels.instance }}。请检查网络、指标端口、路径和组件进程。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/alerting/#告警后的处理顺序"
+
+      - alert: MongoDBExporterDown
+        expr: up{job="mongodb"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          alert_family: mongodb_exporter_down
+          component: mongodb
+        annotations:
+          summary: "MongoDB exporter {{ $labels.instance }} 无法采集"
+          description: "Prometheus 已连续 2 分钟无法采集 MongoDB exporter。请检查 exporter 进程、网络、MongoDB 连接和认证。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/alerting/#告警后的处理顺序"
+
+  - name: tapdata-resources
+    rules:
+      - alert: TapDataLowDiskSpace
+        expr: disk_free_bytes{job=~"tapdata-(management|flow-engine|agent)"} / disk_total_bytes{job=~"tapdata-(management|flow-engine|agent)"} < 0.2
+        for: 15m
+        labels:
+          severity: warning
+          alert_family: disk_space
+          component: "{{ $labels.job }}"
+        annotations:
+          summary: "{{ $labels.instance }} 磁盘可用空间低于 20%"
+          description: "请检查日志、临时文件、备份和数据增长趋势。确认文件归属和恢复方案后再执行清理。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/metrics/#起始健康阈值"
+
+      - alert: TapDataCriticalDiskSpace
+        expr: disk_free_bytes{job=~"tapdata-(management|flow-engine|agent)"} / disk_total_bytes{job=~"tapdata-(management|flow-engine|agent)"} < 0.1
+        for: 5m
+        labels:
+          severity: critical
+          alert_family: disk_space
+          component: "{{ $labels.job }}"
+        annotations:
+          summary: "{{ $labels.instance }} 磁盘可用空间低于 10%"
+          description: "磁盘耗尽可能导致 TapData 组件停止。请立即处理容量风险，并避免误删 MongoDB 数据文件。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/metrics/#起始健康阈值"
+
+      - alert: TapDataHighCpuUsage
+        expr: avg_over_time(system_cpu_usage{job=~"tapdata-(management|flow-engine|agent)"}[5m]) > 0.85
+        for: 15m
+        labels:
+          severity: warning
+          alert_family: cpu_usage
+          component: "{{ $labels.job }}"
+        annotations:
+          summary: "{{ $labels.instance }} CPU 5 分钟均值高于 85%"
+          description: "请结合任务延迟、HTTP 错误、GC 和主机其他进程判断是否需要调优或扩容。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/metrics/#起始健康阈值"
+
+      - alert: TapDataCriticalCpuUsage
+        expr: avg_over_time(system_cpu_usage{job=~"tapdata-(management|flow-engine|agent)"}[5m]) > 0.95
+        for: 5m
+        labels:
+          severity: critical
+          alert_family: cpu_usage
+          component: "{{ $labels.job }}"
+        annotations:
+          summary: "{{ $labels.instance }} CPU 5 分钟均值高于 95%"
+          description: "CPU 已持续处于极高水平。请立即检查任务延迟、HTTP 错误、GC、热点任务和主机进程。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/metrics/#起始健康阈值"
+
+  - name: tapdata-http
+    rules:
+      - alert: TapDataManagementHigh5xxRatio
+        expr: |
+          (
+            sum by (project, instance) (rate(http_server_requests_seconds_count{job="tapdata-management",status=~"5.."}[5m]))
+            /
+            sum by (project, instance) (rate(http_server_requests_seconds_count{job="tapdata-management"}[5m]))
+          ) > 0.05
+          and on (project, instance)
+          sum by (project, instance) (rate(http_server_requests_seconds_count{job="tapdata-management"}[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          alert_family: management_5xx_ratio
+          component: management
+        annotations:
+          summary: "Management {{ $labels.instance }} 的 5xx 比例高于 5%"
+          description: "Management 在有请求流量时连续出现较高 5xx 比例。请按接口、日志、依赖服务和最近变更排查。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/metrics/#起始健康阈值"
+
+      - alert: TapDataManagementCritical5xxRatio
+        expr: |
+          (
+            sum by (project, instance) (rate(http_server_requests_seconds_count{job="tapdata-management",status=~"5.."}[5m]))
+            /
+            sum by (project, instance) (rate(http_server_requests_seconds_count{job="tapdata-management"}[5m]))
+          ) > 0.2
+          and on (project, instance)
+          sum by (project, instance) (rate(http_server_requests_seconds_count{job="tapdata-management"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          alert_family: management_5xx_ratio
+          component: management
+        annotations:
+          summary: "Management {{ $labels.instance }} 的 5xx 比例高于 20%"
+          description: "Management 5xx 已达到严重水平。请立即确认用户影响、接口日志、依赖服务和最近变更。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/alerting/#故障分级与升级"
+
+      - alert: TapDataApiHigh5xxRatio
+        expr: |
+          (
+            sum by (project, instance) (rate(http_requests_total{job="tapdata-api-server",statusCode=~"5.."}[5m]))
+            /
+            sum by (project, instance) (rate(http_requests_total{job="tapdata-api-server"}[5m]))
+          ) > 0.05
+          and on (project, instance)
+          sum by (project, instance) (rate(http_requests_total{job="tapdata-api-server"}[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          alert_family: api_5xx_ratio
+          component: api-server
+        annotations:
+          summary: "API Server {{ $labels.instance }} 的 5xx 比例高于 5%"
+          description: "API Server 在有请求流量时连续出现较高 5xx 比例。请按 path、日志、依赖服务和最近变更排查。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/grafana/#判读-api-server-看板"
+
+      - alert: TapDataApiCritical5xxRatio
+        expr: |
+          (
+            sum by (project, instance) (rate(http_requests_total{job="tapdata-api-server",statusCode=~"5.."}[5m]))
+            /
+            sum by (project, instance) (rate(http_requests_total{job="tapdata-api-server"}[5m]))
+          ) > 0.2
+          and on (project, instance)
+          sum by (project, instance) (rate(http_requests_total{job="tapdata-api-server"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          alert_family: api_5xx_ratio
+          component: api-server
+        annotations:
+          summary: "API Server {{ $labels.instance }} 的 5xx 比例高于 20%"
+          description: "API Server 5xx 已达到严重水平。请立即确认用户影响、接口日志、依赖服务和最近变更。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/alerting/#故障分级与升级"
+
+  - name: tapdata-mongodb
+    rules:
+      - alert: MongoDBConnectionDown
+        expr: mongodb_up{job="mongodb"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          alert_family: mongodb_connection
+          component: mongodb
+        annotations:
+          summary: "MongoDB exporter {{ $labels.instance }} 无法连接数据库"
+          description: "Prometheus 能够抓取 exporter，但 exporter 已连续 2 分钟无法连接 MongoDB。请检查系统库状态、连接 URI、认证库、证书和网络。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/deployment/#检查-mongodb-监控"
+
+      - alert: MongoDBReplicaSetStateUnhealthy
+        expr: |
+          mongodb_rs_myState{job="mongodb"} != 1
+          and mongodb_rs_myState{job="mongodb"} != 2
+          and mongodb_rs_myState{job="mongodb"} != 7
+        for: 5m
+        labels:
+          severity: warning
+          alert_family: mongodb_replset_state
+          component: mongodb
+        annotations:
+          summary: "MongoDB 复制集 {{ $labels.instance }} 状态异常"
+          description: "当前成员已连续 5 分钟不处于 PRIMARY、SECONDARY 或 ARBITER。请检查复制集状态、MongoDB 日志、网络和磁盘。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/grafana/#判读-mongodb-看板"
+
+  # 仅在 Flow Engine 指标地址实际提供 task_* 指标后启用并依赖本规则组。
+  - name: tapdata-tasks
+    rules:
+      - alert: TapDataTaskFailed
+        expr: task_status{job="tapdata-flow-engine"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          alert_family: task_status
+          component: flow-engine
+        annotations:
+          summary: "任务 {{ $labels.task_name }} 已失败"
+          description: "Flow Engine 上的任务状态为失败。请检查任务日志、数据源连接和 Flow Engine 健康状态。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/alerting/#告警后的处理顺序"
+
+      - alert: TapDataTaskRetrying
+        expr: task_status{job="tapdata-flow-engine"} == 2
+        for: 10m
+        labels:
+          severity: warning
+          alert_family: task_status
+          component: flow-engine
+        annotations:
+          summary: "任务 {{ $labels.task_name }} 持续重试"
+          description: "任务已连续 10 分钟处于重试状态。若仍未恢复，请按照任务失败进行排查。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/alerting/#告警后的处理顺序"
+
+      - alert: TapDataTaskDataSourceConnectionError
+        expr: task_active_db{job="tapdata-flow-engine"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          alert_family: task_database_connection
+          component: flow-engine
+        annotations:
+          summary: "任务 {{ $labels.task_name }} 的数据源连接异常"
+          description: "节点 {{ $labels.node_name }} 报告网络或服务端连接异常。请测试连接并检查网络、数据库状态和证书。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/metrics/#核心任务指标"
+
+      - alert: TapDataTaskDataSourceAuthenticationError
+        expr: task_active_db{job="tapdata-flow-engine"} == 2
+        for: 1m
+        labels:
+          severity: critical
+          alert_family: task_database_connection
+          component: flow-engine
+        annotations:
+          summary: "任务 {{ $labels.task_name }} 的数据源认证失败"
+          description: "节点 {{ $labels.node_name }} 报告用户名或密码无效。请检查账号、密码和所需证书。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/metrics/#核心任务指标"
+
+      - alert: TapDataTaskHighCdcDelay
+        expr: task_cdc_delay_ms{job="tapdata-flow-engine"} > 30000
+        for: 5m
+        labels:
+          severity: warning
+          alert_family: task_cdc_delay
+          component: flow-engine
+        annotations:
+          summary: "任务 {{ $labels.task_name }} 的 CDC 延迟超过 30 秒"
+          description: "当前延迟为 {{ $value }} 毫秒。该阈值必须按任务 SLA 调整；请检查源端负载、节点处理耗时、目标写入和网络。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/metrics/#核心任务指标"
+
+      - alert: TapDataTaskCriticalCdcDelay
+        expr: task_cdc_delay_ms{job="tapdata-flow-engine"} > 300000
+        for: 5m
+        labels:
+          severity: critical
+          alert_family: task_cdc_delay
+          component: flow-engine
+        annotations:
+          summary: "任务 {{ $labels.task_name }} 的 CDC 延迟超过 5 分钟"
+          description: "当前延迟为 {{ $value }} 毫秒。该阈值必须按任务 SLA 调整；请立即确认业务影响和积压原因。"
+          runbook_url: "https://docs.tapdata.net/administration/prometheus/alerting/#故障分级与升级"

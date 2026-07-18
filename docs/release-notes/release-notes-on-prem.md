@@ -319,7 +319,7 @@ import TabItem from '@theme/TabItem';
 
 ### 新增功能
 
-- [新增 Prometheus 集成能力](../administration/monitor-with-prometheus.md)，可接入至自建监控体系，同时结合 Grafana 自定义可视化看板
+- [新增 Prometheus 集成能力](../administration/prometheus/README.md)，可接入至自建监控体系，同时结合 Grafana 自定义可视化看板
 - 新增 API 监控指标并支持[邮件告警设置](../user-guide/other-settings/notification.md#mail-alert)
 - 支持[一键复制 API](../user-guide/data-service/create-api-service.md#release330-export-api)，方便快速创建相同配置的 API 服务
 - 新增通过标签[设置任务启动优先级](../user-guide/copy-data/manage-task.md)，批量启动任务时将按优先级顺序执行
