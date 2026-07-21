@@ -421,7 +421,17 @@ const sidebars = {
                     ]
              },
             'administration/operation',
-            'administration/monitor-with-prometheus',
+            {
+              type: 'category',
+              label: 'Prometheus 监控',
+              link: {type: 'doc', id: 'administration/prometheus/README'},
+              items: [
+                     'administration/prometheus/deployment',
+                     'administration/prometheus/metrics',
+                     'administration/prometheus/grafana',
+                     'administration/prometheus/alerting',
+                    ]
+            },
             {
               type: 'category',
               label: '故障排查',
