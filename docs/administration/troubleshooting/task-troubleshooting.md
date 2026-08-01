@@ -167,7 +167,7 @@ TapData 实时数据中心采用“实时同步 + 分层加工”的架构，当
    7. 修复评估：修正配置后，评估是否需要重置任务并全量重新同步。
 
 
-通过以上流程，绝大多数数据异常可在短时间内定位根因。此外，建议将关键表的校验任务纳入[日常监控](../../administration/monitor-with-prometheus.md)和[通知告警](../../case-practices/best-practice/alert-via-qqmail.md)，实现早发现、早处理。
+通过以上流程，绝大多数数据异常可在短时间内定位根因。此外，建议继续在 TapData 任务监控页面查看关键表的数据校验结果，并配置[通知告警](../../case-practices/best-practice/alert-via-qqmail.md)。Prometheus 主要用于监控任务运行状态、延迟和组件资源，不替代数据校验结果告警。
 
 
 如果自查仍无法解决，可简要准备异常表名及所属任务、任务加工逻辑、任务日志（含错误日志）、异常数据样例等信息，联系 [TapData 技术支持](../../appendix/support.md)。
