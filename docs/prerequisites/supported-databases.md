@@ -203,6 +203,15 @@ TapData 支持全量和增量两种同步方式，涵盖单向同步和双向同
     <td>2008、2008 R2、2012、2014、2016、2017、2019、2022</td>
   </tr>
   <tr>
+    <td>StarRocks</td>
+    <td>✅</td>
+    <td>➖</td>
+    <td>➖</td>
+    <td>✅</td>
+    <td>✅</td>
+    <td>3.0 及以上</td>
+  </tr>
+  <tr>
     <td>Sybase</td>
     <td>✅</td>
     <td>✅</td>
@@ -426,15 +435,6 @@ Beta 版本数据源处于公测阶段，已通过基础测试用例和集成测
     <td>✅</td>
     <td>不涉及</td>
   </tr>  
-  <tr>
-    <td>StarRocks</td>
-    <td>➖</td>
-    <td>➖</td>
-    <td>➖</td>
-    <td>✅</td>
-    <td>➖</td>
-    <td>3.0 及以上</td>
-  </tr>
   <tr>
     <td>YashanDB</td>
     <td>➖</td>
