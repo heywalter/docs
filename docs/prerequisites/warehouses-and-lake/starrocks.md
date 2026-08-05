@@ -1,10 +1,10 @@
 # StarRocks
 
-import Content1 from '../../reuse-content/_enterprise-features.md';
+import Content1 from '../../reuse-content/_all-features.md';
 
 <Content1 />
 
-StarRocks 是一款面向实时分析场景设计的高性能数据仓库，采用向量化执行引擎和 MPP 架构，支持高并发、多维分析和实时数据更新。Tapdata 支持将 StarRocks 作为目标库，构建数据管道，帮助企业实现大规模数据的实时入仓与分析加速。
+StarRocks 是一款面向实时分析场景设计的高性能数据仓库，采用向量化执行引擎和 MPP 架构，支持高并发、多维分析和实时数据更新。Tapdata 支持将 StarRocks 作为源或目标库，构建数据管道，帮助企业实现大规模数据的实时入仓与分析加速。
 
 ```mdx-code-block
 import Tabs from '@theme/Tabs';
@@ -28,7 +28,14 @@ StarRocks 3.x（部署架构无限制）
 
 ## 支持同步的操作
 
-**DML**：INSERT、UPDATE、DELETE
+* **DML（仅作为目标库）**：INSERT、UPDATE、DELETE
+* **DDL 应用（仅作为目标库）**：新增字段、修改字段属性、删除字段。
+
+:::tip
+
+作为源库时，仅支持全量同步，不支持增量 CDC 或采集 DDL。
+
+:::
 
 ## 注意事项
 
@@ -36,7 +43,7 @@ StarRocks 3.x（部署架构无限制）
 
   :::tip
 
-  不支持自动创建分区表，为表设置分区键、分桶、排序键设置，如有特殊需求，请在同步前手动创建表。
+  TapData 不会自动创建 StarRocks 表分区。如目标表需要分区，请在同步前手动建表并定义分区。对于 TapData 自动创建的目标表，可在目标节点高级设置中按需配置分桶键、分桶数和排序字段。
 
   :::
 
@@ -65,27 +72,27 @@ StarRocks 3.x（部署架构无限制）
    CREATE USER 'tapdata'@'%' IDENTIFIED BY 'Tap@123456';
    ```
 
-2. 为刚创建的账号授予权限，您也可以基于业务需求设置更精细化的权限控制。
+2. 根据连接类型，为刚创建的账号授予权限。
 
      ```mdx-code-block
      <Tabs className="unique-tabs">
-     <TabItem value="授予指定库权限">
+     <TabItem value="作为源库">
      ```
 
      ```sql
      -- 请替换真实的数据库名和用户名
-     GRANT ALL ON DATABASE your_db_name TO USER your_username;
-     GRANT ALL ON ALL TABLES IN DATABASE database_name TO USER your_username;
+     GRANT SELECT ON ALL TABLES IN DATABASE your_db_name TO USER your_username;
+     GRANT SELECT ON ALL VIEWS IN DATABASE your_db_name TO USER your_username;
     ```
 
      </TabItem>
 
-     <TabItem value="授予所有库权限">
+     <TabItem value="作为目标库">
 
      ```sql
-     -- 请替换真实的用户名
-     GRANT ALL ON ALL DATABASES TO USER your_username;
-     GRANT ALL ON ALL TABLES IN ALL DATABASES TO USER your_username;
+     -- 请替换真实的数据库名和用户名
+     GRANT CREATE TABLE ON DATABASE your_db_name TO USER your_username;
+     GRANT SELECT, INSERT, UPDATE, DELETE, ALTER, DROP ON ALL TABLES IN DATABASE your_db_name TO USER your_username;
     ```
 
      </TabItem>
@@ -93,7 +100,9 @@ StarRocks 3.x（部署架构无限制）
 
     :::tip
 
-    如果数据库位于非默认的数据目录，您需要执行 `SET CATALOG <catelog_name>;` 之后再执行授权命令，您可以通过 [SHOW CATALOGS](https://docs.starrocks.io/zh/docs/sql-reference/sql-statements/Catalog/SHOW_CATALOGS/) 命令查看已创建的数据目录。更多介绍，见[数据目录](https://docs.mirrorship.cn/zh/docs/data_source/catalog/catalog_overview/)。
+    - 作为源库时，上述权限可读取表和视图及其元数据。仅同步表时，可不授予视图的 `SELECT` 权限。
+    - 作为目标库时，上述权限覆盖连接测试、自动建表、数据写入和已支持的字段级 DDL 应用；如已手动建表且不需要 DDL 应用，可按实际使用功能收窄权限。
+    - 如果数据库位于非默认的数据目录，您需要执行 `SET CATALOG <catalog_name>;` 之后再执行授权命令，您可以通过 [SHOW CATALOGS](https://docs.starrocks.io/zh/docs/sql-reference/sql-statements/Catalog/SHOW_CATALOGS/) 命令查看已创建的数据目录。更多介绍，见[数据目录](https://docs.mirrorship.cn/zh/docs/data_source/catalog/catalog_overview/)。
 
     :::
 
@@ -113,11 +122,11 @@ StarRocks 3.x（部署架构无限制）
 
 5. 在跳转到的页面，根据下述说明填写 StarRocks 的连接信息。
 
-   ![连接 Doris](../../images/connect_starrocks.png)
+   ![连接 StarRocks](../../images/connect_starrocks.png)
 
     - **基本设置**
       - **连接名称**：填写具有业务意义的独有名称。
-      - **连接类型**：仅支持将 StarRocks 作为目标库。
+      - **连接类型**：支持将 StarRocks 作为源或目标库。
       - **数据库地址**：StarRocks 的连接地址。
       - **端口**：StarRocks 的查询服务端口，默认端口为 **9030**。
       - **开启 HTTPS**：选择是否启用无证书的 HTTPS 连接功能。
@@ -140,3 +149,21 @@ StarRocks 3.x（部署架构无限制）
    如提示连接测试失败，请根据页面提示进行修复。
 
    :::
+
+## 节点高级特性
+
+将 StarRocks 作为数据同步任务的目标节点时，TapData 会按表在本地缓存数据，并在达到刷新大小或刷新超时后通过 Stream Load 批量写入。对于实时同步中的高频、小批量写入，该机制可减少请求开销。配置同步任务时，您可以通过以下节点高级配置调整自动建表和写入行为，在写入吞吐、数据可见延迟与本地缓存占用之间取得平衡。
+
+
+| 配置 | 说明 |
+| --- | --- |
+| **键类型** | 选择自动建表使用的键模型：Primary（默认）、Duplicate、Aggregate 或 Unique。 |
+| **排序字段** | 当键类型为 **Duplicate** 且使用追加写入、未设置更新条件时，指定排序字段。 |
+| **分区字段** | 用于生成 `DISTRIBUTED BY HASH` 的分桶键。手动设置时优先使用；未设置时使用主键，若没有主键则使用全部字段。该配置不是表分区键。 |
+| **分桶数** | 自动创建表时的分桶数，默认值为 2。 |
+| **表属性** | 为自动创建的表指定 StarRocks 表属性，例如副本数或压缩方式。已有表不会因修改此配置而被重建。 |
+| **写入缓冲区容量** | Stream Load 的写入缓冲区容量，默认值为 10240 KB。 |
+| **写入格式** | 支持 JSON（默认）和 CSV。 |
+| **刷新大小** | 每张表的本地缓存达到指定大小时执行刷新，默认值为 100 MB。 |
+| **刷新超时** | 某张表的本地缓存达到指定等待时间后执行刷新。 |
+| **每分钟写入限制** | 限制每分钟写入的数据量；设置为 0 表示不限制。 |
