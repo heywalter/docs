@@ -83,7 +83,7 @@ import AsciinemaPlayer from '@site/src/components/AsciinemaPlayer/AsciinemaPlaye
       ./tapdata sid
       ```
 
-      如果当前安装包暂不支持该命令，也可以使用下述兼容方式获取 SID。
+      该命令可在首次启动服务前直接执行，无需先完成 `./tapdata start` 的参数配置。如果当前安装包暂不支持该命令，也可以使用下述兼容方式获取 SID。
 
       ```bash
       java -cp components/tm.jar -Dloader.main=com.tapdata.tm.license.util.SidGenerator org.springframework.boot.loader.launch.PropertiesLauncher
@@ -206,7 +206,7 @@ import AsciinemaPlayer from '@site/src/components/AsciinemaPlayer/AsciinemaPlaye
       ./tapdata sid
       ```
 
-      如果当前安装包暂不支持该命令，也可以使用下述兼容方式获取 SID。
+      该命令可在首次启动服务前直接执行，无需先完成 `./tapdata start` 的参数配置。如果当前安装包暂不支持该命令，也可以使用下述兼容方式获取 SID。
 
       ```bash
       java -cp components/tm.jar -Dloader.main=com.tapdata.tm.license.util.SidGenerator org.springframework.boot.loader.launch.PropertiesLauncher

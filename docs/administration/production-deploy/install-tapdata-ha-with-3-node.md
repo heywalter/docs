@@ -60,27 +60,9 @@ import Content from '../../reuse-content/_enterprise-features.md';
 
 :::
 
-1. 获取 License 文件。
+1. 下载 TapData 安装包（可[联系 Tapdata](mailto:team@tapdata.io)获取），将其上传至待部署的设备中。
 
-   1. 执行下述命令获取申请所需的 SID 信息。
-
-      ```bash
-      ./tapdata sid
-      ```
-
-      如果当前安装包暂不支持该命令，也可以使用下述兼容方式获取 SID。
-
-      ```bash
-      java -cp components/tm.jar -Dloader.main=com.tapdata.tm.license.util.SidGenerator org.springframework.boot.loader.launch.PropertiesLauncher
-      ```
-
-   2. 将打印出的 SID 信息提供给 TapData 支持团队，完成 License 申请流程。
-
-   3. 将申请到的 License 文件上传至解压后的目录（**tapdata**）中。
-
-2. 下载 TapData 安装包（可[联系 Tapdata](mailto:team@tapdata.io)获取），将其上传至待部署的设备中。
-
-3. 在所有待部署的设备上，执行下述格式的命令，创建安装目录和工作目录，将 Tapdata 安装包解压至该目录。
+2. 在所有待部署的设备上，执行下述格式的命令，创建安装目录和工作目录，将 Tapdata 安装包解压至该目录。
 
    ```bash
    # 创建安装目录和工作目录
@@ -91,6 +73,24 @@ import Content from '../../reuse-content/_enterprise-features.md';
    :::tip
    如需将解压后的程序文件复制到其他目录进行部署，请使用 `cp -a` 命令复制整个目录，避免使用 `*` 通配符匹配文件，以免遗漏隐藏文件导致启动失败。
    :::
+
+3. 获取 License 文件。
+
+   1. 进入解压后的目录，执行下述命令获取申请所需的 SID 信息。
+
+      ```bash
+      ./tapdata sid
+      ```
+
+      该命令可在首次启动服务前直接执行，无需先完成 `./tapdata start` 的参数配置。如果当前安装包暂不支持该命令，也可以使用下述兼容方式获取 SID。
+
+      ```bash
+      java -cp components/tm.jar -Dloader.main=com.tapdata.tm.license.util.SidGenerator org.springframework.boot.loader.launch.PropertiesLauncher
+      ```
+
+   2. 将打印出的 SID 信息提供给 TapData 支持团队，完成 License 申请流程。
+
+   3. 将申请到的 License 文件上传至解压后的目录（**tapdata**）中。
 
 4. 进入解压后的目录，执行 `./tapdata start` 命令启动 Tapdata 部署程序，然后跟随命令行提示，依次设置 TapData 的登录地址、API 服务端口、MongoDB 连接认证等信息，示例及说明如下：
 
