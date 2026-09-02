@@ -79,10 +79,10 @@
 
 ### 权限与安全设计
 
-TapData 导出的配置文件在导出时自动脱敏，代码仓库中只存放业务配置逻辑。各环境的真实连接凭据独立存储在对应的 GitHub Environment Secrets / Variables 中，部署时按环境自动注入。
+TapData 的 Git 导出配置文件会自动脱敏，代码仓库中只存放业务配置逻辑。各环境的真实连接凭据独立存储在对应的 GitHub Environment Secrets / Variables 中，部署时按环境自动注入；文件导出保留完整配置，应妥善保管。
 
 - 在租户仓库的 `main` 分支开启分支保护：禁止直接推送、要求 Pull Request、要求 Code Review 和 Workflow 检查通过后再合并。
-- `deploy` 审批人应为独立的运维人员，不建议由开发人员审批自己提交的变更。
+- `deploy` 审批人应为独立的运维人员，不建议由开发人员审批自己提交的变更。审批人在 GitHub Actions 界面审批时，可通过 Step Summary 直观核对结构化的差异预览（包括连接变动、任务 DAG 算子与连线变动、API 变更、服务索引独立预览及孤儿索引告警），实现高危操作的严格把控。
 - 组织级 Secrets / Variables 用于存放共享配置，例如 `GH_DEPLOY_TOKEN`、各环境的 TapData 地址和 Access Code。
 - Environment 级 Secrets / Variables 用于存放各连接在不同环境下的真实连接信息。
 
@@ -107,6 +107,10 @@ TapData 导出的配置文件在导出时自动脱敏，代码仓库中只存放
 ### 连接凭据命名规则
 
 连接相关的 Secrets / Variables 命名规则为：将 TapData 中的连接名称转换为全大写后直接匹配。由于 GitHub Secret / Variable 名称仅支持字母、数字和下划线，且需以字母或下划线开头，建议 TapData 连接名称也采用相同规则，例如连接名 `oracle_source` 对应前缀 `ORACLE_SOURCE`。不建议在连接名称中使用空格、连字符（`-`）或中文，否则部署时可能无法匹配到对应凭据。
+
+:::tip 环境隔离机制
+多套环境之间的配置隔离完全由 **GitHub Environments** 实现，连接凭据在各业务 Environment（如 `dev`、`sit`、`prod`）下配置同名项即可。**切勿在连接凭据名称前人为添加环境前缀**（例如不要配置成 `DEV_ORACLE_SOURCE_DSN` 或 `SIT_FDM_URI`，否则流水线将无法正确识别）。
+:::
 
 ## 初始化步骤
 
@@ -136,7 +140,7 @@ TapData 导出的配置文件在导出时自动脱敏，代码仓库中只存放
 2. 为业务团队创建一个存放配置的租户仓库，仓库名称建议与 TapData 平台中的项目名称保持一致（例如 `user-center-sync`），并确认默认分支为 `main`。如仓库默认分支仍为 `master`，请先在 GitHub 仓库设置中切换为 `main`，或同步调整 Workflow 中监听的分支名。
 
 3. 租户仓库只需创建两个轻量级的 Workflow 路由文件（从 Worker 仓库的 `tenant-template/.github/workflows/` 目录复制），用于把触发事件转发给 Worker 仓库处理：
-   - **`tapdata-deploy.yml`**：负责监听配置文件的合并（如 `main` 分支的 `*_tapdata_export/**` 路径变更）、Tag 推送以及手动触发动作，默认将租户仓库名作为项目名。
+   - **`tapdata-deploy.yml`**：负责监听配置文件的合并（如 `main` 分支的 `*_tapdata_export/**` 路径变更）、Tag 推送以及手动触发动作，默认将租户仓库名作为项目名。合并 PR 触发部署时，流水线在 Actions 列表中会自动以该 PR 的标题作为运行名称（例如 `feat(api): xxx (#12) · dw-pipeline → dev`），便于直观追踪每次部署对应的具体业务变更。
    - **`tapdata-rollback.yml`**：负责接收手动触发的回滚指令（指定环境和回滚版本）。
    
    :::tip
@@ -196,12 +200,11 @@ TapData 导出的配置文件在导出时自动脱敏，代码仓库中只存放
 
 4. `deploy` 仅作为审批门使用，不需要配置 TapData 地址、Access Code 或连接凭据；这些信息应配置在测试、生产及其他业务 Environment 中。
 5. 如需对生产发布流程本身增加环境级审批，可在 `prod` Environment 中另行配置 **Required reviewers**。
-6. 为开发、测试和生产等实际启用环境配置对应环境下的真实连接信息。连接凭据应配置在对应 Environment 下，名称不需要再添加环境前缀，通常有两种保存方式：
+6. 为开发、测试和生产等实际启用环境配置对应环境下的真实连接信息。连接凭据直接配置在对应的 Environment 下，无需添加环境前缀。TapData 支持以下三种凭据格式：
 
-   * **URI 格式**：适用于 MongoDB 等将用户名、密码包含在连接串中的场景，建议作为 Secret 保存，名称为 `{前缀}_URI`，例如 `FDM_URI`。
-   * **Host:Port 格式**：适用于 PostgreSQL、Oracle、MySQL 等场景，地址和账号可存为 Variable，密码存为 Secret，名称分别为 `{前缀}_URL`、`{前缀}_USER`、`{前缀}_PASSWORD`，对应示例为 `ORACLE_SOURCE_URL`、`ORACLE_SOURCE_USER`、`ORACLE_SOURCE_PASSWORD`。
-
-   如果多个连接可共用同一套默认连接信息，也可以配置 `DEFAULT_URL`、`DEFAULT_USER` 和 `DEFAULT_PASSWORD` 作为兜底值。
+   - **DSN 格式（适用于跨环境数据库名不同的场景）**：配置变量 `{前缀}_DSN` 与密钥 `{前缀}_PASSWORD`。这是唯一支持跨环境自定义数据库名的格式（如 `order_dev`/`order_sit`），流水线会优先采用此格式；DSN 变量中的密码位须保持留空（如 `user:@host:port/db`，MongoDB 须保留 `用户名:@`），真实密码安全存放于 Secret，切勿在变量中写入明文密码。DSN 中的地址、数据库名和用户名存放在明文 Variable 中，仓库协作者可见且可能出现在 Actions 日志中；如无需按环境切换数据库名，建议继续使用原有格式。
+   - **Host:Port 格式**：配置变量 `{前缀}_URL`、`{前缀}_USER` 与密钥 `{前缀}_PASSWORD`。适用于各环境数据库名一致的关系型数据库，支持通过 `DEFAULT_*` 全局兜底。
+   - **完整 URI 格式**：配置密钥 `{前缀}_URI`（如 `mongodb://user:pass@host:port/db`）。适用于存量 MongoDB 连接或需将整条连接串整体加密的场景。
 
 ### 步骤四：安装自托管运行器
 
